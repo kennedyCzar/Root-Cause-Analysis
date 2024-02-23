@@ -1,4 +1,4 @@
-# ROOTCAUSEANALYSIS
+# Conditional Random Field (CRF) for Root Cause Analysis during Process Mining Industry
 Git to work the week on that project
 
 Project realized on Python
@@ -33,11 +33,4 @@ Project realized on Python
 * Event clustering with Levenschstein distance.
 
 ## Citations
-```
-@inproceedings{Panchendrarajan2018BidirectionalLF,
-  title={Bidirectional LSTM-CRF for Named Entity Recognition},
-  author={Rrubaa Panchendrarajan and Aravindh Amaresan},
-  booktitle={Pacific Asia Conference on Language, Information and Computation},
-  year={2018}
-}
-```
+
