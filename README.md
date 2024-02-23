@@ -1,4 +1,4 @@
-# Conditional Random Field (CRF) for Root Cause Analysis during Process Mining Industry
+# Conditional Random Field (CRF) for Root Cause Analysis during Process Mining
 
 This work was carried out during the GDR MaDICS inaugural launch. It held its first Business Study Week in Data Sciences of the GDR CNRS MaDICS (SEEDS@MaDICS). This meeting aims to create exchanges between industrial circles and the academic world through a week of work on problems posed by industrialists and requiring innovative computer science and/or mathematical approaches. Inspired by the SEME (Mathematics Study Week – Business) model of AMIES.
 
