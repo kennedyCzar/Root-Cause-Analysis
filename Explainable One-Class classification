@@ -1,0 +1,184 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 30 11:35:53 2023
+
+@author: amine.melakhsou
+"""
+
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import metrics
+from collections import Counter
+from itertools import chain
+import datetime
+from sklearn.cluster import KMeans
+
+
+# %% Read data
+
+Parcours=pd.read_csv("Logs_parcours_complets_real.csv",sep=";")
+Parcours.set_index('ID', inplace = True)
+Parcours = Parcours.astype(str).groupby(['ID']).agg({'Event': lambda x: '-'.join(x)})
+
+"""
+###---Time to add later to the feature vector
+def convert_to_time(item):
+    return(datetime.datetime.strptime(item, '%Y-%m-%d %H:%M:%S'))
+
+times=Parcours["EventTS"]
+times.head()
+times = Parcours.groupby('ID')['EventTS'].apply(lambda x: x.tolist())
+times=times.values
+time_difference=[]
+for i in range(len(times)):
+    tdelta=convert_to_time(times[i][-1])-convert_to_time(times[i][0])
+    time_difference.append(tdelta.total_seconds())
+"""   
+
+# %% Prepare Data
+
+
+sequences=Parcours["Event"]
+sequences=[sent.split("-") for sent in sequences]
+
+input_sequences=[]
+for i in range(len(sequences)):
+   input_sequences.append([int(item) for item in sequences[i]])
+
+
+
+target_sequences=pd.read_csv("Violations_real.csv",sep=";")[:len(input_sequences)]
+target_sequences=target_sequences.values[:,1:]
+labels=[]
+labels_for_f1=[]
+for i in range(len(target_sequences)):
+    if all(target_sequences[i]==0):
+        labels.append(0)
+        labels_for_f1.append(0)
+    else:
+        labels_for_f1.append(1)
+        if len(np.where(target_sequences[i]==1)[0])>1:
+            labels.append(1+np.where(target_sequences[i]==1)[0][1])
+        else:
+            labels.append(1+np.where(target_sequences[i]==1)[0][0])
+            
+labels=np.array(labels)
+
+
+
+traces=[]
+for i in range(len(input_sequences)):
+    traces.append([int(task) for task in input_sequences[i]])
+
+
+unique_traces = [list(x) for x in set(tuple(x) for x in traces)]
+
+
+unique_traces_flatten = np.array([item for sublist in unique_traces for item in sublist])
+
+activities =np.unique(unique_traces_flatten)
+
+
+# %% Prepare Transition profiles and feature vectors
+
+def get_transition_profile(trace):
+   
+    transition_profile = np.zeros((len(activities), len(activities)))
+
+    for i in range(len(trace)-1):
+        activity_i = trace[i]-1
+       
+        activity_j = trace[i+1]-1
+        
+    
+        transition_profile[activity_i,activity_j] += 1
+        
+        
+    return (transition_profile.flatten())
+
+##transition names needed for explainability
+def get_transition_names(trace):
+    transition_names=[]
+    for i in range(len(trace)):
+        for j in range(len(trace)):
+            activity_i = trace[i]
+       
+            activity_j = trace[j]
+        
+            transition_names.append(str(activity_i)+"-"+str(activity_j))
+        
+    return(transition_names)
+            
+    
+
+transition_profiles=[get_transition_profile(trace) for trace in traces]
+
+transition_profiles=np.array(transition_profiles)
+
+t_names=get_transition_names(activities)
+
+# %% Clustering 100 normal event traces
+
+
+#Using BIC, I found that only one cluster exist in the data (BIC keep growing)
+k=1
+kmeans=KMeans(k)
+
+from scipy.spatial import distance
+kmeans.fit(transition_profiles[np.where(labels==0)[:100]])
+
+centroid=np.round(kmeans.cluster_centers_[0],0)
+
+import time
+t1=time.time()
+dist_from_center=(distance.cdist(transition_profiles,centroid.reshape(1,-1)))[:,0]
+t2=time.time()
+
+# %% Predict all events using distance to the cluster centroid
+
+thresh=np.mean(dist_from_center)+1*np.std(dist_from_center)
+
+plt.plot(dist_from_center,"k")
+plt.title("Distance from the centroid",fontsize=20,fontweight="bold")
+plt.ylabel("Distance",fontsize=20,fontweight="bold")
+plt.xlabel("Event ID",fontsize=20,fontweight="bold")
+
+
+id_abnormal=np.where(dist_from_center>thresh)
+
+
+y_pred=np.zeros(len(transition_profiles))
+y_pred[id_abnormal]=1
+
+Pre,Rec,F1,_=metrics.precision_recall_fscore_support(labels_for_f1,y_pred,average='macro',pos_label=1)
+print(round(F1,3))
+
+
+a=np.where(labels==6)[0][0]
+dist_from_center[a]
+
+print(labels[a])
+
+print("normal",traces[0])
+print("abnormal",traces[a])
+
+
+# %% Explainability using point wise difference
+
+feat_importance=(transition_profiles[a]-centroid)
+
+plt.plot(t_names,feat_importance)
+plt.title("Feature importance",fontsize=20,fontweight="bold")
+plt.ylabel("Difference",fontsize=20,fontweight="bold")
+plt.xlabel("Transitions",fontsize=20,fontweight="bold")
+plt.plot()
+
+missing=np.argmin(feat_importance)
+
+t_names[missing]
+
+
+
