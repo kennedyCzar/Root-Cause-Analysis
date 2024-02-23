@@ -1,7 +1,11 @@
 # Conditional Random Field (CRF) for Root Cause Analysis during Process Mining Industry
-Git to work the week on that project
 
-Project realized on Python
+This work was carried out during the GDR MaDICS inaugural launch. It held its first Business Study Week in Data Sciences of the GDR CNRS MaDICS (SEEDS@MaDICS). This meeting aims to create exchanges between industrial circles and the academic world through a week of work on problems posed by industrialists and requiring innovative computer science and/or mathematical approaches. Inspired by the SEME (Mathematics Study Week – Business) model of AMIES.
+
+SEEDS@MaDICS took place at the University of Technology of Troyes from March 27 to March 31, 2023.
+
+
+Project realized using Python
 
 * Logistic_regression -> LR on the first events on we print the coefficients to analyze the global trend
 * CRF-> the model of the CRF with the features of interest
@@ -33,4 +37,4 @@ Project realized on Python
 * Event clustering with Levenschstein distance.
 
 ## Citations
-
+Unpublished work.
